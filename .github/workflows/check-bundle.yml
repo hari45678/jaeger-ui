@@ -31,24 +31,25 @@ jobs:
       - name: Calculate bundle size
         run: |
           TOTAL_SIZE=$(du -sb build | cut -f1)
-          echo "$TOTAL_SIZE" > bundle-size.txt
+          echo "$TOTAL_SIZE" > new_bundle_size.txt
           echo "Total bundle size: $TOTAL_SIZE bytes"
 
       - name: Restore previous bundle size
         id: cache-bundle-size
         uses: actions/cache@v4
         with:
-          path: bundle-size.txt
+          path: ./bundle_size.txt
           key: bundle-size-${{ github.ref_name }}
 
       - name: Compare bundle sizes
         run: |
-          if [ -f bundle-size.txt ]; then
-            OLD_BUNDLE_SIZE=$(cat bundle-size.txt)
+          if [ -f bundle_size.txt ]; then
+            OLD_BUNDLE_SIZE=$(cat bundle_size.txt)
+            NEW_BUNDLE_SIZE=$(cat new_bundle_size.txt)
             echo "Previous bundle size: $OLD_BUNDLE_SIZE bytes"
-            echo "New bundle size: $(cat bundle-size.txt) bytes"
+            echo "New bundle size: $NEW_BUNDLE_SIZE bytes"
             
-            SIZE_CHANGE=$(( $TOTAL_SIZE - $OLD_BUNDLE_SIZE ))
+            SIZE_CHANGE=$(( $NEW_BUNDLE_SIZE - $OLD_BUNDLE_SIZE ))
             PERCENTAGE_CHANGE=$(( SIZE_CHANGE * 100 / $OLD_BUNDLE_SIZE ))
 
             echo "Size change: $PERCENTAGE_CHANGE%"
@@ -63,16 +64,21 @@ jobs:
             echo "No previous bundle size found. This will be the baseline."
           fi
 
+      - name: Remove previous *_bundle_*.txt file
+        run: |
+          rm -rf bundle_size.txt
+          mv new_bundle_size.txt bundle_size.txt
+        
       - name: Save new bundle size
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4
         with:
-          path: bundle-size.txt
+          path: ./bundle_size.txt
           key: bundle-size-${{ github.ref_name }}
 
       - name: Upload bundle size artifact
         uses: actions/upload-artifact@v4
         with:
           name: bundle-size
-          path: bundle-size.txt
+          path: ./bundle_size.txt
           retention-days: 30
