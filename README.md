@@ -2,7 +2,7 @@
 
 # Jaeger UI
 
-Visualize distributed tracing with Jaeger.
+Visualize distributed tracing with Jaeger
 
 |              Trace Search              |             Trace Details              |
 | :------------------------------------: | :------------------------------------: |
