@@ -1,0 +1,82 @@
+name: Bundle Size Check
+
+on:
+  pull_request:
+    paths:
+      - 'packages/jaeger-ui/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/jaeger-ui/**'
+
+jobs:
+  build-and-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/jaeger-ui
+
+    steps:
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build with stats
+        run: npm run build
+
+      - name: Generate bundle stats
+        run: |
+          npm install -g vite-bundle-analyzer
+          vite-bundle-analyzer stats.json
+          echo "NEW_BUNDLE_SIZE=$(cat stats.json | jq '.assets | map(.size) | add')" >> $GITHUB_ENV
+
+      - name: Restore previous bundle size
+        id: cache-bundle-size
+        uses: actions/cache@v4
+        with:
+          path: bundle-size.txt
+          key: bundle-size-${{ github.ref_name }}
+
+      - name: Compare bundle sizes
+        run: |
+          if [ -f bundle-size.txt ]; then
+            OLD_BUNDLE_SIZE=$(cat bundle-size.txt)
+            INCREASE_PERCENTAGE=$(( ($NEW_BUNDLE_SIZE - $OLD_BUNDLE_SIZE) * 100 / $OLD_BUNDLE_SIZE ))
+            
+            echo "Previous bundle size: $OLD_BUNDLE_SIZE bytes"
+            echo "New bundle size: $NEW_BUNDLE_SIZE bytes"
+            echo "Size change: $INCREASE_PERCENTAGE%"
+            
+            if [ $INCREASE_PERCENTAGE -gt 2 ]; then
+              echo "❌ Bundle size increased by more than 2% ($INCREASE_PERCENTAGE%)"
+              exit 1
+            else
+              echo "✅ Bundle size change is within acceptable range ($INCREASE_PERCENTAGE%)"
+            fi
+          else
+            echo "No previous bundle size found. This will be the baseline."
+          fi
+          
+          echo $NEW_BUNDLE_SIZE > bundle-size.txt
+
+      - name: Save new bundle size
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: bundle-size.txt
+          key: bundle-size-${{ github.ref_name }}
+
+      - name: Upload bundle stats artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: stats.json
+          retention-days: 30
