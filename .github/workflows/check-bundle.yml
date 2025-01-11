@@ -30,7 +30,7 @@ jobs:
 
       - name: Calculate bundle size
         run: |
-          TOTAL_SIZE=$(du -sb dist | cut -f1)
+          TOTAL_SIZE=$(du -sb build | cut -f1)
           echo "Total bundle size: $TOTAL_SIZE bytes"
           echo "NEW_BUNDLE_SIZE=$TOTAL_SIZE" >> $GITHUB_ENV
 
