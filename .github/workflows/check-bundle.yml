@@ -68,6 +68,8 @@ jobs:
         run: |
           rm -rf bundle_size.txt
           mv new_bundle_size.txt bundle_size.txt
+          pwd
+          ls
         
       - name: Save new bundle size
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
