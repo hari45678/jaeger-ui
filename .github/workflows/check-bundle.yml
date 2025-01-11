@@ -14,10 +14,10 @@ jobs:
         working-directory: packages/jaeger-ui
 
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
+      - uses: actions/checkout@v4 # v4.2.1
 
       - name: Setup Node.js
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        uses: actions/setup-node@v4 # v4.1.0
         with:
           node-version: '20'
           cache: 'npm'
@@ -31,13 +31,8 @@ jobs:
       - name: Calculate bundle size
         run: |
           TOTAL_SIZE=$(du -sb build | cut -f1)
+          echo "$TOTAL_SIZE" > bundle-size.txt
           echo "Total bundle size: $TOTAL_SIZE bytes"
-          echo "NEW_BUNDLE_SIZE=$TOTAL_SIZE" >> $GITHUB_ENV
-
-      - name: Generate bundle analysis
-        run: |
-          npm install -g vite-bundle-visualizer
-          vite-bundle-visualizer -t treemap -o bundle-analysis.html
 
       - name: Restore previous bundle size
         id: cache-bundle-size
@@ -50,23 +45,23 @@ jobs:
         run: |
           if [ -f bundle-size.txt ]; then
             OLD_BUNDLE_SIZE=$(cat bundle-size.txt)
-            INCREASE_PERCENTAGE=$(( ($NEW_BUNDLE_SIZE - $OLD_BUNDLE_SIZE) * 100 / $OLD_BUNDLE_SIZE ))
-            
             echo "Previous bundle size: $OLD_BUNDLE_SIZE bytes"
-            echo "New bundle size: $NEW_BUNDLE_SIZE bytes"
-            echo "Size change: $INCREASE_PERCENTAGE%"
+            echo "New bundle size: $(cat bundle-size.txt) bytes"
             
-            if [ $INCREASE_PERCENTAGE -gt 2 ]; then
-              echo "❌ Bundle size increased by more than 2% ($INCREASE_PERCENTAGE%)"
+            SIZE_CHANGE=$(( $TOTAL_SIZE - $OLD_BUNDLE_SIZE ))
+            PERCENTAGE_CHANGE=$(( SIZE_CHANGE * 100 / $OLD_BUNDLE_SIZE ))
+
+            echo "Size change: $PERCENTAGE_CHANGE%"
+
+            if [ $PERCENTAGE_CHANGE -gt 2 ]; then
+              echo "❌ Bundle size increased by more than 2% ($PERCENTAGE_CHANGE%)"
               exit 1
             else
-              echo "✅ Bundle size change is within acceptable range ($INCREASE_PERCENTAGE%)"
+              echo "✅ Bundle size change is within acceptable range ($PERCENTAGE_CHANGE%)"
             fi
           else
             echo "No previous bundle size found. This will be the baseline."
           fi
-          
-          echo $NEW_BUNDLE_SIZE > bundle-size.txt
 
       - name: Save new bundle size
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -75,12 +70,9 @@ jobs:
           path: bundle-size.txt
           key: bundle-size-${{ github.ref_name }}
 
-      - name: Upload bundle analysis
-        if: always()
+      - name: Upload bundle size artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-analysis
-          path: |
-            bundle-analysis.html
-            dist
+          name: bundle-size
+          path: bundle-size.txt
           retention-days: 30
