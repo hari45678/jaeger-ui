@@ -38,7 +38,7 @@ jobs:
         id: cache-bundle-size
         uses: actions/cache@v4
         with:
-          path: ./bundle_size.txt
+          path: ~/jaeger-ui/packages/jaeger-ui/bundle_size.txt
           key: bundle-size-${{ github.ref_name }}
 
       - name: Compare bundle sizes
@@ -75,12 +75,12 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/cache/save@v4
         with:
-          path: ./bundle_size.txt
+          path: ~/jaeger-ui/packages/jaeger-ui/bundle_size.txt
           key: bundle-size-${{ github.ref_name }}
 
       - name: Upload bundle size artifact
         uses: actions/upload-artifact@v4
         with:
           name: bundle-size
-          path: ./bundle_size.txt
+          path: ~/jaeger-ui/packages/jaeger-ui/bundle_size.txt
           retention-days: 30
