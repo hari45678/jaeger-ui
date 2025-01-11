@@ -1,6 +1,6 @@
 [![Build Status][ci-img]][ci] [![Coverage Status][cov-img]][cov] [![FOSSA Status][fossa-img]][fossa] [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/jaegertracing/jaeger-ui/badge)](https://securityscorecards.dev/viewer/?uri=github.com/jaegertracing/jaeger-ui)
 
-# Jaeger UI
+# Jaeger UI.
 
 Visualize distributed tracing with Jaeger.
 
