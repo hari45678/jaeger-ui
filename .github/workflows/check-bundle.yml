@@ -2,13 +2,9 @@ name: Bundle Size Check
 
 on:
   pull_request:
-    paths:
-      - 'packages/jaeger-ui/**'
+    branches: [main]
   push:
-    branches:
-      - main
-    paths:
-      - 'packages/jaeger-ui/**'
+    branches: [main]
 
 jobs:
   build-and-check:
