@@ -10,7 +10,7 @@ Visualize distributed tracing with Jaeger.
 
 ## Contributing
 
-See [CONTRIBUTING](./CONTRIBUTING.md).
+See [CONTRIBUTING](./CONTRIBUTING.md)
 
 Stuck somewhere or found a bug? See [Getting in Touch](https://www.jaegertracing.io/get-in-touch/) on how to ask for help.
 
